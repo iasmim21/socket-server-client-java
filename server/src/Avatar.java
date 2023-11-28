@@ -42,8 +42,4 @@ public class Avatar implements Serializable {
     public int getAgility() {
         return agility;
     }
-
-
-
-
 }

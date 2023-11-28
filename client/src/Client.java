@@ -13,6 +13,7 @@ public class Client {
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         String enterKey;
+
         do {
             System.out.println("Digite 'start' para iniciar sua jornada");
             enterKey = scanner.nextLine();
@@ -28,7 +29,9 @@ public class Client {
         try (socket) {
             output = new ObjectOutputStream(socket.getOutputStream());
             input = new ObjectInputStream(socket.getInputStream());
+
             ClientProtocol protocol = new ClientProtocol(Status.START);
+
             output.writeObject(protocol);
             output.flush();
 
@@ -54,6 +57,7 @@ public class Client {
 
                         response = (ServerProtocol) input.readObject();
                         System.out.println(response.getMessage());
+
                         processStep();
                     } else {
                         System.out.println("Erro: Avatar inválido");
@@ -87,7 +91,30 @@ public class Client {
             System.out.println(option.getNextStepId() + " - " + option.getDescription());
         }
 
-        int nextStepId = Integer.parseInt(scanner.nextLine());
+//        int nextStepId = Integer.parseInt(scanner.nextLine());
+
+        //validar se p nextStepId pertence a algum option.getNextStepId() de options, se não retorar erro
+
+        int nextStepId;
+
+        while (true) {
+            try {
+                nextStepId = Integer.parseInt(scanner.nextLine());
+
+                int finalNextStepId = nextStepId;
+
+                boolean isValidOption = options.stream()
+                        .anyMatch(option -> option.getNextStepId() == finalNextStepId);
+
+                if (isValidOption) {
+                    break;
+                } else {
+                    System.out.println("Opção inválida. Por favor informe novamente o número da sua escolha.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Opção inválida. Insira um número válido");
+            }
+        }
 
         ClientProtocol protocol = new ClientProtocol(Status.EXECUTION);
         protocol.setSelectedOptionId(nextStepId);

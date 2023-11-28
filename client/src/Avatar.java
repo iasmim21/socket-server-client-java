@@ -3,12 +3,12 @@ import java.io.Serializable;
 public class Avatar implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private int id;
-    private String name;
-    private int resistance;
-    private int force;
-    private int intelligence;
-    private int agility;
+    private final int id;
+    private final String name;
+    private final int resistance;
+    private final int force;
+    private final int intelligence;
+    private final int agility;
 
     public Avatar(int id, String name, int resistance, int force, int intelligence, int agility) {
         this.id = id;
@@ -42,8 +42,4 @@ public class Avatar implements Serializable {
     public int getAgility() {
         return agility;
     }
-
-
-
-
 }

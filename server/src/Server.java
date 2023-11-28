@@ -1,8 +1,10 @@
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,34 +18,45 @@ public class Server {
     private static Socket socket;
     private static Server server;
 
-    public static void main(String[] args) throws IOException, ClassNotFoundException {
-            server = new Server();
-            System.out.println("Aguardando conexão...");
+    public static void main(String[] args) throws IOException {
+        server = new Server();
+        server.createServerSocket(5555);
 
-            server.createServerSocket(5555);
+        System.out.println("Aguardando conexão...");
 
-            socket = server.waitConnection();
-            System.out.println("Cliente conectado");
+        while (true) {
+            try {
+                socket = server.waitConnection();
+                System.out.println("Cliente conectado");
 
-            output = new ObjectOutputStream(socket.getOutputStream());
-            input = new ObjectInputStream(socket.getInputStream());
+                output = new ObjectOutputStream(socket.getOutputStream());
+                input = new ObjectInputStream(socket.getInputStream());
 
-            while (true) {
-                System.out.println("Processar");
-                server.treatConnection();
+                while (server.treatConnection()) {
+                    System.out.println("Processando...");
+                }
+            } catch (SocketException se) {
+                System.out.println("Cliente desconectado.");
+            } finally {
+                closeResources();
+                System.out.println("Aguardando nova conexão...");
             }
+        }
     }
 
-    private void createServerSocket(int port) throws IOException {
-        serverSocket = new ServerSocket(port);
-    }
+    private boolean treatConnection() {
+        try {
+            if (socket.isClosed()) {
+                System.out.println("Cliente desconectado.");
 
-    private void treatConnection() throws IOException, ClassNotFoundException {
+                return false;
+            }
+
             ClientProtocol clientProtocol = (ClientProtocol) input.readObject();
             Status status = clientProtocol.getStatus();
 
             ServerProtocol serverProtocol = new ServerProtocol();
-            System.out.println("status client:" + status.toString());
+            System.out.println("Status:" + status.toString());
 
             if (status.equals(Status.START)) {
                 serverProtocol.setMessage("Vamos lá, primeiro escolha seu avatar (informe o id):");
@@ -71,6 +84,39 @@ public class Server {
             } else {
                 selectNextStep(clientProtocol, serverProtocol);
             }
+
+            return true;
+        } catch (EOFException e) {
+            System.out.println("Cliente desconectado.");
+
+            closeResources();
+            return false;
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+
+            closeResources();
+            return false;
+        }
+    }
+
+    private static void closeResources() {
+        try {
+            if (input != null) {
+                input.close();
+            }
+            if (output != null) {
+                output.close();
+            }
+            if (socket != null) {
+                socket.close();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void createServerSocket(int port) throws IOException {
+        serverSocket = new ServerSocket(port);
     }
 
     private void selectNextStep(ClientProtocol clientProtocol, ServerProtocol serverProtocol) throws IOException {
@@ -186,7 +232,6 @@ public class Server {
                                 "A Cachoeira de Nivergton e Caverna de Novigard.\n" +
                                 "\n" +
                                 "Decididos a reverter a transformação, os nossos aventureiros iniciam a sua jornada. a caminho de:\n\n",
-                        "",
                         options1
                 ),
                 new Step(
@@ -199,7 +244,6 @@ public class Server {
                                 "os aventureiros deparam-se com um dilema. Não há mais uma estrada a seguir, o caminho até a cachoeira é pela correnteza do rio.\n" +
                                 "\n" +
                                 "Você, " + avatar.getName() + ", deseja seguir pelo rio ou procurar outro caminho?\n",
-                        "",
                         options2
                 ),
 
@@ -210,7 +254,6 @@ public class Server {
                                 "por conta disso, ela foi se escondendo com o passar dos tempos. A dúvida é, será que ela vai ajudar com a \n" +
                                 "transformação do Pabllo?\n\n" +
                                 avatar.getName() + " você deseja entrar na caverna?",
-                        "",
                         options3
                 ),
 
@@ -218,20 +261,20 @@ public class Server {
                         4,
                         "Após se recusar a entrar na caverna, você e seu grupo acampam na entrada. \n" +
                                 "O que não esperavam era que, enquanto dormiam, seriam o jantar de uma família de ursos que dormiam dentro da caverna.",
-                        "",
                         fim
                 ),
 
                 new Step(
                         5,
                         "Adentrando a caverna, você se depara com duas bifurcações. Qual lado você escolhe?",
-                        "Help Message 2",
                         options5
                 ),
                 new Step(
                         6,
-                        "",
-                        "",
+                        "Entrando na bifurcação escolhida, o grupo anda por alguns metros e se deparam com múltiplos ossos de seres humanos. \n" +
+                                "Com o auxílio do lampião que você está segurando, ilumina o caminho. \n" +
+                                "Um pouco à frente dos ossos está um grande urso pardo que tinha recém acordado de uma hibernação. \n" +
+                                "Ele está com muita fome e você foi a refeição.",
                         fim
                 ),
                 new Step(
@@ -239,14 +282,12 @@ public class Server {
                         "Após passar por essa bifurcação surgem três novas, \n" +
                                 "investigando um pouco é possível sentir um cheiro de enxofre na bifurcação mais à esquerda, \n" +
                                 "na do meio é possível sentir uma brisa suave e na direita você sente um calafrio ao se aproximar da entrada.\n",
-                        "",
                         options7
                 ),
                 new Step(
                         8,
                         "Entrando na bifurcação escolhida, um pouco à frente você é surpreendido com alguns goblins ágeis que acabam \n" +
                                 "nocauteando o seu grupo em um piscar de olhos, vocês não conseguiram chegar até a bruxa",
-                        "",
                         fim
                 ),
                 new Step(
@@ -269,7 +310,6 @@ public class Server {
                                 "Bruxa: acho melhor encontrar algo para ele vestir.\n" +
                                 "\n\n" +
                                 "Pabllo estava de volta ao normal, porém agora precisava de roupas.\n",
-                        "",
                         fim
                 ),
                 new Step(
@@ -278,7 +318,6 @@ public class Server {
                                 "Com o auxílio do lampião que você está segurando, ilumina o caminho. \n" +
                                 "Um pouco à frente dos ossos está um grande urso pardo adormecido. \n" +
                                 "É melhor voltar em silêncio até o início da bifurcação.\n",
-                        "",
                         fim
                 ),
                 new Step(
@@ -286,14 +325,12 @@ public class Server {
                         "A equipe adentra as águas doces pela direita do rio, segurando-se em uma grande raiz de árvore à beira do rio. \n" +
                                 "A correnteza não é leve, e alguns metros à frente as raízes se esgotam. \n" +
                                 "É preciso segurar-se em algo para não ser levado pelas águas. O que você escolhe?\n",
-                        "",
                         options11
                 ),
                 new Step(
                         12,
                         "Ao tentar se esgueirar pelas bordas do rio, as pedras revelam-se muito escorregadias. \n" +
                                 "Teria sido melhor tentar seguir pelo rio desde o início.\n",
-                        "",
                         fim
                 ),
                 new Step(
@@ -301,14 +338,12 @@ public class Server {
                         "Ao escolher a pedra à esquerda, você consegue agarrar se à pedra. \n" +
                                 "No entanto, a pedra está mais escorregadia que o normal, possuía limo. \n" +
                                 "Infelizmente, você escorrega e é levado pela correnteza.\n",
-                        "",
                         fim
                 ),
                 new Step(
                         14,
                         "Ao tentar nadar para o outro lado, a correnteza parece ainda mais forte. \n" +
                                 "Você não conseguiu chegar ao outro lado e foi levado pelo rio.\n",
-                        "",
                         fim
                 ),
                 new Step(
@@ -316,14 +351,12 @@ public class Server {
                         "Ao nadar em direção ao cipó à frente, vocês conseguem agarrá-lo com sucesso. \n" +
                                 "Ao olhar ao redor, no outro lado do rio, há um caminho para seguir. \n" +
                                 "Agora, têm a opção de:\n",
-                        "",
                         options15
                 ),
                 new Step(
                         16,
                         "Infelizmente o cipó não é tão resistente para aguentar por muito tempo 2 humanos, 1 rato, 1 gnomo e uma estátua. \n" +
                                 "Portanto, depois de alguns minutos pendurados, o cipó se parte e os aventureiros são levados pela correnteza\n\n",
-                        "",
                         fim
                 ),
                 new Step(
@@ -337,14 +370,12 @@ public class Server {
                                 "Pabllo foi correndo até ela pedir ajuda. Ao olhar em direção ao Pabllo, a Bruxa apresentava olhos escuros e uma aparência pálida. \n" +
                                 "Aquela não era a Bruxa e, agora, ela levantou e virou em direção à vocês.\n" +
                                 "O que você faz?\n\n",
-                        "",
                         options17
                 ),
                 new Step(
                         18,
                         "Você e o grupo seguem em direção à vegetação e correm o mais longe possível.  \n" +
                                 "Vocês fugiram do seu objetivo e deixaram Pabllo para trás.\n",
-                        "",
                         fim
                 ),
                 new Step(
@@ -368,7 +399,6 @@ public class Server {
                                 "Bruxa: Ó espíritos do dragão, eu sempre esqueço de falar que eles precisam pegar roupas antes!\n" +
                                 "\n" +
                                 "Pabllo estava de volta ao normal, porém agora precisava de roupas.\n",
-                        "",
                         fim
                 )
         };

@@ -4,7 +4,6 @@ import java.util.List;
 public class ServerProtocol implements Serializable {
     private static final long serialVersionUID = 1L;
     private String message;
-    private String help_message;
     private List<Option> options;
 
     private List<Avatar> avatars;
@@ -14,16 +13,8 @@ public class ServerProtocol implements Serializable {
         return message;
     }
 
-    public String getHelpMessage() {
-        return help_message;
-    }
-
     public void setMessage(String message) {
         this.message = message;
-    }
-
-    public void setHelpMessage(String help_message) {
-        this.help_message = help_message;
     }
 
     public void setOptions(List<Option> options) {
