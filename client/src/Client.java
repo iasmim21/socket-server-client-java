@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.util.List;
 import java.util.Scanner;
@@ -24,9 +25,11 @@ public class Client {
     }
 
     private static void startGame() throws IOException, ClassNotFoundException {
-        Socket socket = new Socket("localhost", 5555);
+        Socket socket = null;
 
-        try (socket) {
+        try {
+            socket = new Socket("localhost", 5555);
+
             output = new ObjectOutputStream(socket.getOutputStream());
             input = new ObjectInputStream(socket.getInputStream());
 
@@ -76,9 +79,18 @@ public class Client {
             System.out.println("FFF     II   M M M     D   D  EEEE       J  O   O  G       O   O");
             System.out.println("F       II   M   M     D   D  E       J  J  O   O  G   GG  O   O");
             System.out.println("F       II   M   M     DDDD   EEEEE    JJ   OOOOO   GGGG   OOOOO");
+        } catch (ConnectException e) {
+            System.err.println("Erro: Conexão recusada. Certifique-se de que o servidor está em execução.");
         } finally {
-            input.close();
-            output.close();
+            if (socket != null && !socket.isClosed()) {
+                socket.close();
+            }
+            if (input != null) {
+                input.close();
+            }
+            if (output != null) {
+                output.close();
+            }
         }
     }
 
@@ -90,10 +102,6 @@ public class Client {
         for (Option option : options){
             System.out.println(option.getNextStepId() + " - " + option.getDescription());
         }
-
-//        int nextStepId = Integer.parseInt(scanner.nextLine());
-
-        //validar se p nextStepId pertence a algum option.getNextStepId() de options, se não retorar erro
 
         int nextStepId;
 
