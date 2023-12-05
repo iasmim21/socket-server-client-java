@@ -21,14 +21,14 @@ public class Client {
 
         } while (!enterKey.equals("start"));
 
-        startGame();
+        startGame(args[0]);
     }
 
-    private static void startGame() throws IOException, ClassNotFoundException {
+    private static void startGame(String ip) throws IOException, ClassNotFoundException {
         Socket socket = null;
 
         try {
-            socket = new Socket("localhost", 5555);
+            socket = new Socket(ip, 5555);
 
             output = new ObjectOutputStream(socket.getOutputStream());
             input = new ObjectInputStream(socket.getInputStream());
