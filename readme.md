@@ -61,7 +61,26 @@ Compilar e Executar o Cliente:
   java Client
 ```
 
+
+
 Se tudo ocorreu com sucesso, deve ser exibida a mensagem: "Digite 'start' para iniciar sua jornada"
+
+## Rodar o projeto com JAR (outra opção)
+Na raiz do projeto:
+```bash
+  cd server/out/artifacts/server_jar
+  java -jar server.jar
+```
+
+Em outro terminal, ou em outra máquina, na raiz do projeto:
+```bash
+  cd client/out/artifacts/client_jar
+  java -jar client.jar "server_ip" 
+  
+  //substitua server_ip pelo ip do servidor
+  //se não informar, por padrão será localhost
+```
+
 
 ### Iniciar jornada:
 - Digite 'start' para iniciar a aventura.

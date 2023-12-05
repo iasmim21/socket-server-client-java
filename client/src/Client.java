@@ -4,6 +4,7 @@ import java.io.ObjectOutputStream;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 
 public class Client {
@@ -21,7 +22,7 @@ public class Client {
 
         } while (!enterKey.equals("start"));
 
-        startGame(args[0]);
+        startGame(Objects.isNull(args[0]) ? "localhost" : args[0]);
     }
 
     private static void startGame(String ip) throws IOException, ClassNotFoundException {
